@@ -93,7 +93,6 @@ public class TextWebSocketFrameHandler extends
         // Broadcast a message to multiple Channels
         channels.writeAndFlush(new TextWebSocketFrame("[SERVER] - " + incoming.remoteAddress() + " 离开"));
 		log.info("Client:" + incoming.remoteAddress() + "离开");
-
     }
 
 	/**

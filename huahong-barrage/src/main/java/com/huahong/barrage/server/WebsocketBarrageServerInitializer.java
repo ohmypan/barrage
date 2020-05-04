@@ -11,7 +11,9 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -31,6 +33,7 @@ public class WebsocketBarrageServerInitializer extends
 		pipeline.addLast("http-request",new HttpRequestHandler("/ws"));
 		pipeline.addLast("WebSocket-protocol",new WebSocketServerProtocolHandler("/ws"));
 		pipeline.addLast("WebSocket-request",new TextWebSocketFrameHandler());
+		pipeline.addLast("heart-beat",new IdleStateHandler(5,5,5, TimeUnit.SECONDS));
 
     }
 }
