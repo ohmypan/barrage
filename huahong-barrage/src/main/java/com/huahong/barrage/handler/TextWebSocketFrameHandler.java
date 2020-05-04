@@ -1,7 +1,10 @@
 package com.huahong.barrage.handler;
 
+import com.huahong.barrage.filter.BadMessageFilter;
+import com.huahong.barrage.filter.Filter;
+import com.huahong.barrage.filter.TextFilter;
+import com.huahong.barrage.filter.YellowFilter;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -10,19 +13,21 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
-import java.nio.ByteBuffer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * 处理TextWebSocketFrame
  * @author huahong
  */
 @Slf4j
+@Component
 public class TextWebSocketFrameHandler extends
         SimpleChannelInboundHandler<TextWebSocketFrame> {
-	
+
 	public static ChannelGroup channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
 	/**
@@ -36,7 +41,10 @@ public class TextWebSocketFrameHandler extends
 			TextWebSocketFrame msg) throws Exception {
 		Channel incoming = ctx.channel();
 		StringBuilder message = new StringBuilder(msg.text());
-		doFilter(incoming,message);
+		List<TextFilter> filters = new ArrayList<>();
+		filters.add(new YellowFilter());
+		filters.add(new BadMessageFilter());
+		doFilter(message,filters);
 		for (Channel channel : channels) {
             if (channel != incoming){
 				channel.writeAndFlush(new TextWebSocketFrame(message.toString()));
@@ -47,13 +55,15 @@ public class TextWebSocketFrameHandler extends
 	}
 
 	/**
-	 * 过滤消息或者黑名单人员
-	 * @param incoming
+	 * 过滤消息
 	 * @param msg
+	 * @param filters
 	 */
-	private void doFilter(Channel incoming,StringBuilder msg){
+	private void doFilter(StringBuilder msg,List<TextFilter> filters){
 		String oldMessage = msg.toString();
-		oldMessage = oldMessage.replaceAll("妈","*");
+		for(TextFilter filter:filters){
+			oldMessage = filter.filter(oldMessage);
+		}
 		msg.delete(0,msg.length());
 		msg.append(oldMessage);
 	}
